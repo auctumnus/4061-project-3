@@ -1,0 +1,9 @@
+test_results
+*.o
+./minitar
+*.bin
+*.txt
+./test.tar
+slow_write
+*/swish
+par_letter_counts
