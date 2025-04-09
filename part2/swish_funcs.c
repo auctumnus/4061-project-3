@@ -47,15 +47,15 @@ int run_piped_command(strvec_t *tokens, int *pipes, int n_pipes, int in_idx, int
 	    }
 
 	    if (in_idx != -1) {
-		    if (dup2(pipes[in_idx], STDIN_FILENO)) {
-			    perror("pipe");
+		    if (dup2(pipes[in_idx], STDIN_FILENO) == -1) {
+			    perror("dup2");
 			    exit(1);
 		    }
 	    }
 
 	    if (out_idx != -1) {
-		    if (dup2(pipes[out_idx], STDOUT_FILENO)) {
-			    perror("pipe");
+		    if (dup2(pipes[out_idx], STDOUT_FILENO) == -1) {
+			    perror("dup2");
 			    exit(1);
 		    }
 	    }
@@ -101,12 +101,13 @@ int run_pipelined_commands(strvec_t *tokens) {
 	    return -1;
     }
 
+
     for (int i = 0; i <= n_pipes; i++) {
 	    int in_idx = (i == 0) ? -1 : (i-1) * 2;
 	    int out_idx = (i == n_pipes) ? -1 : i * 2 + 1;
 	    int length = n_pipes * 2;
 
-	    if (run_piped_command(tokens, pfds, length, in_idx, out_idx)) {
+	    if (run_piped_command(&cur, pfds, length, in_idx, out_idx)) {
 		    fprintf(stderr, "failed to run one command in chain\n");
 		    for (int j = 0; j < length; j++) {
 			    close(pfds[j]);
@@ -118,7 +119,7 @@ int run_pipelined_commands(strvec_t *tokens) {
 	    if (i != n_pipes) {
 		    strvec_t temp;
 		    int pidx = strvec_find(&cur, "|");
-		    if (strvec_slice(&cur, &temp, pidx, cur.length)) {
+		    if (strvec_slice(&cur, &temp, pidx + 1, cur.length)) {
 			    fprintf(stderr, "strvec slice failed\n");
 			    for (int j = 0; j < length; j++) {
 				    close(pfds[i]);
@@ -130,6 +131,8 @@ int run_pipelined_commands(strvec_t *tokens) {
 		    cur = temp;
 	    }
     }
+
+    strvec_clear(&cur);
 
     for (int i = 0; i < n_pipes * 2; i++) {
 	    if (close(pfds[i])) {
@@ -143,6 +146,17 @@ int run_pipelined_commands(strvec_t *tokens) {
     }
 
     free(pfds);
+
+    int status = 0;
+
+    for (int i = 0; i <= n_pipes; i++) {
+	    int nstat;
+	    if (wait(&nstat) == -1) {
+		    perror("wait");
+		    return -1;
+	    }
+	    status = status & nstat;
+    }
 
     return 0;
 }
