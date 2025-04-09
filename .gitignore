@@ -7,3 +7,4 @@ test_results
 slow_write
 */swish
 par_letter_counts
+!swish_funcs_provided*
