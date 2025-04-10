@@ -47,7 +47,7 @@ int count_letters(const char *file_name, int *counts) {
             }
         }
     }
-    
+
     if (bytes_read == -1) {
         perror("read");
         fclose(file);
@@ -74,7 +74,7 @@ int process_file(const char *file_name, int out_fd) {
     // TODO it seems like they want us to use stdio but
     // i dont rly want to figure out if stdio plays nicely
     // with pipes
-    if(write(out_fd, counts, sizeof(counts)) == -1) {
+    if (write(out_fd, counts, sizeof(counts)) == -1) {
         perror("write");
         return -1;
     }
@@ -116,7 +116,7 @@ int main(int argc, char **argv) {
 
     // TODO Aggregate all the results together by reading from the pipe in the parent
     int counts[ALPHABET_LEN] = {0};
-    for(int i = 0; i < argc; i++) {
+    for (int i = 0; i < argc; i++) {
         int file_counts[ALPHABET_LEN] = {0};
         if (read(pipe_fds[0], file_counts, sizeof(file_counts)) == -1) {
             perror("read");
